@@ -1,12 +1,172 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Моя перша HTML сторінка</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер завдань</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .done {
+            text-decoration: line-through;
+        }
+        .button {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
- <h1>Привіт, світ!</h1>
- <p>Це моя перша HTML сторінка з доданим текстом.</p>
+    <h1>Менеджер завдань</h1>
+
+    <div>
+        <input type="text" id="taskName" placeholder="Введіть назву завдання">
+        <input type="text" id="taskPriority" placeholder="Пріоритет (1-5)">
+        <input type="text" id="taskDueDate" placeholder="Дата виконання (DD/MM/YYYY)">
+        <button onclick="addTask()">Додати завдання</button>
+    </div>
+
+    <h2>Список завдань</h2>
+    <div id="taskList">
+        <p>Список завдань порожній.</p>
+    </div>
+
+    <script>
+        let tasks = [];
+
+        function loadTasks() {
+            const savedTasks = localStorage.getItem('tasks');
+            if (savedTasks) {
+                tasks = JSON.parse(savedTasks);
+            }
+            showTasks();
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function showTasks() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<p>Список завдань порожній.</p>';
+            } else {
+                tasks.forEach((task, index) => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+
+                    const taskDetails = document.createElement('span');
+                    taskDetails.textContent = `${index + 1}. ${task.name} - Пріоритет: ${task.priority}, Дата виконання: ${task.dueDate}`;
+                    if (task.done) {
+                        taskDetails.classList.add('done');
+                    }
+
+                    const buttons = document.createElement('div');
+
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Редагувати';
+                    editButton.className = 'button';
+                    editButton.onclick = () => editTask(index);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Видалити';
+                    deleteButton.className = 'button';
+                    deleteButton.onclick = () => deleteTask(index);
+
+                    const doneButton = document.createElement('button');
+                    doneButton.textContent = task.done ? 'Позначити невиконаним' : 'Позначити виконаним';
+                    doneButton.className = 'button';
+                    doneButton.onclick = () => markTaskDone(index);
+
+                    buttons.appendChild(editButton);
+                    buttons.appendChild(deleteButton);
+                    buttons.appendChild(doneButton);
+
+                    taskDiv.appendChild(taskDetails);
+                    taskDiv.appendChild(buttons);
+
+                    taskList.appendChild(taskDiv);
+                });
+            }
+        }
+
+        function addTask() {
+            const taskName = document.getElementById('taskName').value;
+            const taskPriority = document.getElementById('taskPriority').value;
+            const taskDueDate = document.getElementById('taskDueDate').value;
+
+            const priorityRegex = /^[1-5]$/;
+            const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+
+            if (taskName.trim() === '') {
+                alert('Введіть назву завдання.');
+                return;
+            }
+            if (!priorityRegex.test(taskPriority)) {
+                alert('Пріоритет повинен бути цілим числом від 1 до 5.');
+                return;
+            }
+            if (!dateRegex.test(taskDueDate)) {
+                alert('Дата виконання повинна бути у форматі DD/MM/YYYY.');
+                return;
+            }
+
+            tasks.push({ name: taskName, priority: taskPriority, dueDate: taskDueDate, done: false });
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskPriority').value = '';
+            document.getElementById('taskDueDate').value = '';
+            saveTasks();
+            showTasks();
+        }
+
+        function editTask(index) {
+            const newName = prompt('Введіть нову назву завдання:', tasks[index].name);
+            const newPriority = prompt('Введіть новий пріоритет (1-5):', tasks[index].priority);
+            const newDueDate = prompt('Введіть нову дату виконання (DD/MM/YYYY):', tasks[index].dueDate);
+
+            const priorityRegex = /^[1-5]$/;
+            const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+
+            if (newName !== null && newName.trim() !== '') {
+                tasks[index].name = newName;
+            }
+            if (newPriority !== null && priorityRegex.test(newPriority)) {
+                tasks[index].priority = newPriority;
+            } else {
+                alert('Пріоритет повинен бути цілим числом від 1 до 5.');
+                return;
+            }
+            if (newDueDate !== null && dateRegex.test(newDueDate)) {
+                tasks[index].dueDate = newDueDate;
+            } else {
+                alert('Дата виконання повинна бути у форматі DD/MM/YYYY.');
+                return;
+            }
+            saveTasks();
+            showTasks();
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            saveTasks();
+            showTasks();
+        }
+
+        function markTaskDone(index) {
+            tasks[index].done = !tasks[index].done;
+            saveTasks();
+            showTasks();
+        }
+
+        window.onload = loadTasks;
+    </script>
 </body>
 </html>
